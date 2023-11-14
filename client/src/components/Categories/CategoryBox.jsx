@@ -4,8 +4,12 @@ import qs from "query-string";
 const CategoryBox = ({ label, icon: Icon, selected }) => {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
+
   const handleClick = () => {
-    const currentQuery = qs.parse(params.toString());
+    let currentQuery = {};
+    if (params) {
+      currentQuery = qs.parse(params.toString());
+    }
     const updatedQuery = { ...currentQuery, category: label };
 
     const url = qs.stringifyUrl({
