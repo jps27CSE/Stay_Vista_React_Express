@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import useAuth from "../../hooks/useAuth";
-import { getToken } from "../../api/auth";
+import { getToken, saveUser } from "../../api/auth";
 import toast from "react-hot-toast";
 import { TbFidgetSpinner } from "react-icons/tb";
 
@@ -28,18 +28,23 @@ const Login = () => {
     }
   };
 
+  // Handle Google Signin
   const handleGoogleSignIn = async () => {
     try {
+      //2. User Registration using google
       const result = await signInWithGoogle();
 
+      //4. save user data in database
       const dbResponse = await saveUser(result?.user);
+      console.log(dbResponse);
 
+      //5. get token
       await getToken(result?.user?.email);
       navigate(from, { replace: true });
-      toast.success("Sign Up Successful");
-    } catch (error) {
-      console.log(error);
-      toast.error(error?.message);
+      toast.success("Login Successful");
+    } catch (err) {
+      console.log(err);
+      toast.error(err?.message);
     }
   };
 

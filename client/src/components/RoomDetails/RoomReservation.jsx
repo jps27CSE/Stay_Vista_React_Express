@@ -10,9 +10,12 @@ const RoomReservation = ({ room }) => {
     endDate: new Date(room?.to),
     key: "selection",
   });
+
+  //   Total days * price
   const totalDays = parseInt(
     formatDistance(new Date(room?.to), new Date(room?.from)).split(" ")[0]
   );
+  // Total Price Calculation
   const totalPrice = totalDays * room?.price;
 
   return (
