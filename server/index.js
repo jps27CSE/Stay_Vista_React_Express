@@ -88,7 +88,19 @@ async function run() {
       const options = { upsert: true };
       const isExist = await usersCollection.findOne(query);
       console.log("User found?----->", isExist);
-      if (isExist) return res.send(isExist);
+      if (isExist) {
+        if (user?.status === "Requested") {
+          const result = await usersCollection.updateOne(query, {
+            $set: {
+              user,
+            },
+            options,
+          });
+          return res.send(result);
+        } else {
+          return res.send(isExist);
+        }
+      }
       const result = await usersCollection.updateOne(
         query,
         {
@@ -172,6 +184,22 @@ async function run() {
     //get all users
     app.get("/users", verifyToken, async (req, res) => {
       const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
+
+    //update user role
+    app.put("/users/update/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      const query = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          ...user,
+          timestamp: Date.now(),
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc, options);
       res.send(result);
     });
 
