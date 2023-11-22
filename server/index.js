@@ -145,8 +145,33 @@ async function run() {
           booked: status,
         },
       };
-
       const result = await roomsCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
+    //get all bookings for guest
+    app.get("/bookings", verifyToken, async (req, res) => {
+      const email = req.query.email;
+      console.log("hello from body", email);
+      if (!email) return res.send([]);
+      const query = { "guest.email": email };
+      const result = await bookingsCollection.find(query).toArray();
+      res.send(result);
+      console.log("hello", result);
+    });
+
+    //get all bookings for host
+    app.get("/bookings/host", verifyToken, async (req, res) => {
+      const email = req.query.email;
+      if (!email) return res.send([]);
+      const query = { host: email };
+      const result = await bookingsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    //get all users
+    app.get("/users", verifyToken, async (req, res) => {
+      const result = await usersCollection.find().toArray();
       res.send(result);
     });
 
