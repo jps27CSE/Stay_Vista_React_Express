@@ -7,6 +7,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 const morgan = require("morgan");
 const port = process.env.PORT || 8000;
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 
 // middleware
 const corsOptions = {
@@ -45,6 +46,7 @@ async function run() {
   try {
     const usersCollection = client.db("stayVistaDb").collection("users");
     const roomsCollection = client.db("stayVistaDb").collection("rooms");
+    const bookingsCollection = client.db("stayVistaDb").collection("bookings");
 
     // auth related api
     app.post("/jwt", async (req, res) => {
@@ -107,6 +109,44 @@ async function run() {
     // Get all rooms
     app.get("/rooms", async (req, res) => {
       const result = await roomsCollection.find().toArray();
+      res.send(result);
+    });
+
+    //generate client secret for stripe
+    app.post("/create-payment-intent", verifyToken, async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      if (!price || amount < 1) return;
+      const { client_secret } = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({ clientSecret: client_secret });
+    });
+
+    // save booking info in booking collection
+    app.post("/bookings", verifyToken, async (req, res) => {
+      const booking = req.body;
+      const result = await bookingsCollection.insertOne(booking);
+      //send email
+
+      res.send(result);
+    });
+
+    //update room booking status
+
+    app.patch("/rooms/status/:id", async (req, res) => {
+      const id = req.params.id;
+      const status = req.body.status;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          booked: status,
+        },
+      };
+
+      const result = await roomsCollection.updateOne(query, updateDoc);
       res.send(result);
     });
 

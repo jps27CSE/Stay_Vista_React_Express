@@ -71,7 +71,10 @@ const BookingModal = ({ closeModal, isOpen, bookingInfo }) => {
                 <hr className="mt-8 " />
                 {/* Card data form */}
                 <Elements stripe={stripePromise}>
-                  <CheckoutForm closeModal={closeModal} />
+                  <CheckoutForm
+                    closeModal={closeModal}
+                    bookingInfo={bookingInfo}
+                  />
                 </Elements>
               </Dialog.Panel>
             </Transition.Child>
