@@ -26,6 +26,8 @@ const GuestMenu = () => {
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsOpen(false);
     }
   };
 

@@ -48,6 +48,29 @@ async function run() {
     const roomsCollection = client.db("stayVistaDb").collection("rooms");
     const bookingsCollection = client.db("stayVistaDb").collection("bookings");
 
+    //role verification middleware
+    //for admins
+    const verifyAdmin = async (req, res, next) => {
+      const user = req.user;
+      const query = { email: user?.email };
+      const result = await usersCollection.findOne(query);
+      if (!result || result?.role !== "admin") {
+        return res.status(401).send({ message: "unauthorized access" });
+      }
+      next();
+    };
+
+    //for host
+    const verifyHost = async (req, res, next) => {
+      const user = req.user;
+      const query = { email: user?.email };
+      const result = await usersCollection.findOne(query);
+      if (!result || result?.role !== "host") {
+        return res.status(401).send({ message: "unauthorized access" });
+      }
+      next();
+    };
+
     // auth related api
     app.post("/jwt", async (req, res) => {
       const user = req.body;
@@ -90,12 +113,11 @@ async function run() {
       console.log("User found?----->", isExist);
       if (isExist) {
         if (user?.status === "Requested") {
-          const result = await usersCollection.updateOne(query, {
-            $set: {
-              user,
-            },
-            options,
-          });
+          const result = await usersCollection.updateOne(
+            query,
+            { $set: user },
+            options
+          );
           return res.send(result);
         } else {
           return res.send(isExist);
@@ -173,7 +195,7 @@ async function run() {
     });
 
     //get all bookings for host
-    app.get("/bookings/host", verifyToken, async (req, res) => {
+    app.get("/bookings/host", verifyToken, verifyHost, async (req, res) => {
       const email = req.query.email;
       if (!email) return res.send([]);
       const query = { host: email };
@@ -182,7 +204,7 @@ async function run() {
     });
 
     //get all users
-    app.get("/users", verifyToken, async (req, res) => {
+    app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
@@ -204,7 +226,7 @@ async function run() {
     });
 
     //get rooms for host
-    app.get("/rooms/:email", async (req, res) => {
+    app.get("/rooms/:email", verifyToken, verifyHost, async (req, res) => {
       const email = req.params.email;
       const result = await roomsCollection
         .find({ "host.email": email })
